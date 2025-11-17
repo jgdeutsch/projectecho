@@ -56,10 +56,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error launching run:", error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error("Full error:", { errorMessage, errorStack, error });
     return NextResponse.json(
       {
         error: "Internal server error",
-        details: error instanceof Error ? error.message : String(error),
+        details: errorMessage,
+        // Include stack in development
+        ...(process.env.NODE_ENV === "development" && { stack: errorStack }),
       },
       { status: 500 }
     );

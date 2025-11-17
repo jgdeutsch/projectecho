@@ -10,9 +10,11 @@ const POLL_INTERVAL_MS = 4000;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { runId: string } }
+  { params }: { params: Promise<{ runId: string }> | { runId: string } }
 ) {
-  const runId = params.runId;
+  // Handle both sync and async params (Next.js 14+)
+  const resolvedParams = await Promise.resolve(params);
+  const runId = resolvedParams.runId;
 
   // Get run from database
   const run = await db.query.runs.findFirst({

@@ -48,7 +48,10 @@ export default function Home() {
 
       if (!launchResponse.ok) {
         const error = await launchResponse.json();
-        throw new Error(error.error || "Failed to launch");
+        const errorMessage = error.details 
+          ? `${error.error}: ${error.details}`
+          : error.error || "Failed to launch";
+        throw new Error(errorMessage);
       }
 
       const { runId: newRunId } = await launchResponse.json();
