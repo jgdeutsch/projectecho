@@ -77,7 +77,15 @@ export async function GET(
             timestamp: new Date().toISOString(),
           });
 
-          const status = containerResponse.status || "unknown";
+          // Extract status - check multiple possible locations
+          let status = containerResponse.status;
+          if (!status && (containerResponse as any).containerStatus) {
+            status = (containerResponse as any).containerStatus;
+          }
+          if (!status && (containerResponse as any).data?.status) {
+            status = (containerResponse as any).data.status;
+          }
+          status = status || "unknown";
           
           sendEvent({
             type: "log",
@@ -85,17 +93,27 @@ export async function GET(
             timestamp: new Date().toISOString(),
           });
 
-          // Log full response for debugging if status is stuck
-          if (pollCount > 10 && status === "running") {
+          // Log full response structure for debugging
+          if (pollCount <= 3 || (pollCount > 10 && status === "running")) {
+            const responsePreview = JSON.stringify(containerResponse).substring(0, 800);
             sendEvent({
               type: "log",
-              message: `Debug: Full container response (first 500 chars): ${JSON.stringify(containerResponse).substring(0, 500)}`,
+              message: `Debug: Response structure: ${responsePreview}...`,
               timestamp: new Date().toISOString(),
             });
           }
 
           // Extract and send PhantomBuster logs
-          const outputText = containerResponse.output || JSON.stringify(containerResponse);
+          // The output might be in containerResponse.output or containerResponse.outputText or the whole response
+          let outputText = containerResponse.output;
+          if (!outputText && (containerResponse as any).outputText) {
+            outputText = (containerResponse as any).outputText;
+          }
+          if (!outputText) {
+            // Fallback: stringify the whole response to search for URLs/logs
+            outputText = JSON.stringify(containerResponse);
+          }
+          
           const phantomLogs = extractPhantomLogs(outputText);
           
           if (phantomLogs.length > 0) {
@@ -114,9 +132,18 @@ export async function GET(
             });
           }
 
-          // Extract LinkedIn URLs
+          // Extract LinkedIn URLs from the output text (same as bash script)
           const urls = extractLinkedInUrls(outputText);
           const newUrls = urls.filter((url) => !seenUrls.has(url));
+          
+          // Log URL extraction for debugging
+          if (newUrls.length > 0) {
+            sendEvent({
+              type: "log",
+              message: `Found ${newUrls.length} new URLs in output`,
+              timestamp: new Date().toISOString(),
+            });
+          }
 
           for (const url of newUrls) {
             seenUrls.add(url);
