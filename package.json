@@ -1,0 +1,42 @@
+{
+  "name": "projectecho",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit push",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "drizzle-orm": "^0.33.0",
+    "postgres": "^3.4.3",
+    "drizzle-kit": "^0.24.0",
+    "bcryptjs": "^2.4.3",
+    "csv-stringify": "^6.4.4",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/uuid": "^9.0.8",
+    "typescript": "^5",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.5"
+  }
+}
+
