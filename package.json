@@ -10,7 +10,9 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "dotenv -e .env.local -- drizzle-kit push",
     "db:push": "dotenv -e .env.local -- drizzle-kit push",
-    "db:studio": "dotenv -e .env.local -- drizzle-kit studio"
+    "db:studio": "dotenv -e .env.local -- drizzle-kit studio",
+    "db:check": "dotenv -e .env.local -- tsx scripts/check-db.ts",
+    "db:migrate-sql": "dotenv -e .env.local -- tsx scripts/run-migration.ts"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -37,6 +39,7 @@
     "eslint-config-next": "14.2.5",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
+    "tsx": "^4.20.6",
     "typescript": "^5"
   }
 }

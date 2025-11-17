@@ -29,7 +29,7 @@ export default function Form({ onSubmit, disabled }: FormProps) {
           value={liAt}
           onChange={(e) => setLiAt(e.target.value)}
           disabled={disabled}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-sm"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed font-mono text-sm text-gray-900 bg-white"
           rows={3}
           placeholder="Paste your LinkedIn li_at cookie value here"
         />
@@ -44,7 +44,7 @@ export default function Form({ onSubmit, disabled }: FormProps) {
           value={postUrl}
           onChange={(e) => setPostUrl(e.target.value)}
           disabled={disabled}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-900 bg-white"
           placeholder="https://www.linkedin.com/posts/..."
         />
       </div>
