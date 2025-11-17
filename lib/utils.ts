@@ -19,7 +19,7 @@ export function hashCookie(cookie: string): string {
 export function extractLinkedInUrls(text: string): string[] {
   const regex = /https:\/\/www\.linkedin\.com\/in\/[^"'\s]+/g;
   const matches = text.match(regex) || [];
-  return [...new Set(matches)]; // Deduplicate
+  return Array.from(new Set(matches)); // Deduplicate
 }
 
 export function extractPhantomLogs(text: string): string[] {
