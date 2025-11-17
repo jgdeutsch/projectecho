@@ -16,7 +16,7 @@ interface Liker {
   timestamp: string;
 }
 
-const MAX_POLLS = 30;
+const MAX_POLLS = 60; // Increased to match backend
 
 export default function Home() {
   const [isRunning, setIsRunning] = useState(false);

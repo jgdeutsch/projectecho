@@ -5,7 +5,7 @@ import { fetchContainer } from "@/lib/phantombuster";
 import { extractLinkedInUrls, extractPhantomLogs } from "@/lib/utils";
 import { eq } from "drizzle-orm";
 
-const MAX_POLLS = 30;
+const MAX_POLLS = 60; // Increased from 30 to 60 (4 minutes total)
 const POLL_INTERVAL_MS = 4000;
 
 export async function GET(
@@ -85,6 +85,15 @@ export async function GET(
             timestamp: new Date().toISOString(),
           });
 
+          // Log full response for debugging if status is stuck
+          if (pollCount > 10 && status === "running") {
+            sendEvent({
+              type: "log",
+              message: `Debug: Full container response (first 500 chars): ${JSON.stringify(containerResponse).substring(0, 500)}`,
+              timestamp: new Date().toISOString(),
+            });
+          }
+
           // Extract and send PhantomBuster logs
           const outputText = containerResponse.output || JSON.stringify(containerResponse);
           const phantomLogs = extractPhantomLogs(outputText);
@@ -124,12 +133,12 @@ export async function GET(
             });
           }
 
-          // Check for errors
-          if (outputText.toLowerCase().includes("error") && status === "error") {
+          // Check for errors - check status first, then output text
+          if (status === "error") {
             sendEvent({
               type: "error",
-              message: "ERROR detected",
-              raw: outputText,
+              message: "ERROR detected in container status",
+              raw: JSON.stringify(containerResponse),
               timestamp: new Date().toISOString(),
             });
 
@@ -137,12 +146,21 @@ export async function GET(
               .update(runs)
               .set({
                 status: "error",
-                rawOutput: outputText,
+                rawOutput: JSON.stringify(containerResponse).substring(0, 10000),
               })
               .where(eq(runs.id, runId));
 
             controller.close();
             return;
+          }
+
+          // Also check for error in output text
+          if (outputText.toLowerCase().includes("error") && !outputText.toLowerCase().includes("no error")) {
+            sendEvent({
+              type: "log",
+              message: `Warning: Error keyword found in output: ${outputText.substring(0, 200)}`,
+              timestamp: new Date().toISOString(),
+            });
           }
 
           // Check if finished
@@ -203,18 +221,43 @@ export async function GET(
         }
 
         if (pollCount >= MAX_POLLS) {
+          // Get final status before closing
+          const finalResponse = await fetchContainer(containerId);
+          const finalStatus = finalResponse.status || "unknown";
+          const finalOutput = finalResponse.output || JSON.stringify(finalResponse);
+          
           sendEvent({
             type: "error",
-            message: "Max polls reached",
+            message: `Max polls reached (${MAX_POLLS}). Final status: ${finalStatus}. URLs found: ${seenUrls.size}`,
+            raw: finalOutput.substring(0, 1000),
             timestamp: new Date().toISOString(),
           });
-          await db
-            .update(runs)
-            .set({
-              status: "error",
-              rawOutput: "Max polls reached",
-            })
-            .where(eq(runs.id, runId));
+          
+          // If we found URLs, mark as finished with partial results
+          if (seenUrls.size > 0) {
+            await db
+              .update(runs)
+              .set({
+                status: "finished",
+                totalUrls: seenUrls.size,
+                rawOutput: `Max polls reached but ${seenUrls.size} URLs found. Final status: ${finalStatus}`,
+              })
+              .where(eq(runs.id, runId));
+            
+            sendEvent({
+              type: "done",
+              total: seenUrls.size,
+              timestamp: new Date().toISOString(),
+            });
+          } else {
+            await db
+              .update(runs)
+              .set({
+                status: "error",
+                rawOutput: `Max polls reached. Final status: ${finalStatus}. Response: ${finalOutput.substring(0, 5000)}`,
+              })
+              .where(eq(runs.id, runId));
+          }
         }
 
         controller.close();
