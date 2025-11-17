@@ -5,6 +5,7 @@ import Form from "@/components/Form";
 import ProgressBar from "@/components/ProgressBar";
 import Terminal from "@/components/Terminal";
 import ResultsTable from "@/components/ResultsTable";
+import Footer from "@/components/Footer";
 
 interface LogEntry {
   message: string;
@@ -202,6 +203,9 @@ export default function Home() {
         <h2 className="text-xl font-semibold mb-4">Terminal</h2>
         <Terminal logs={logs} />
       </div>
+
+      {/* Footer */}
+      <Footer />
     </main>
   );
 }
