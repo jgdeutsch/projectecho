@@ -93,24 +93,37 @@ export async function GET(
             timestamp: new Date().toISOString(),
           });
 
-          // Log full response structure for debugging
-          if (pollCount <= 3 || (pollCount > 10 && status === "running")) {
-            const responsePreview = JSON.stringify(containerResponse).substring(0, 800);
+          // Log full response structure for debugging (first few polls and when stuck)
+          if (pollCount <= 3 || (pollCount > 10 && status === "running" && pollCount % 5 === 0)) {
+            const fullResponse = JSON.stringify(containerResponse, null, 2);
             sendEvent({
               type: "log",
-              message: `Debug: Response structure: ${responsePreview}...`,
+              message: `Debug: Full response (${fullResponse.length} chars): ${fullResponse.substring(0, 1500)}${fullResponse.length > 1500 ? '...' : ''}`,
               timestamp: new Date().toISOString(),
             });
           }
 
-          // Extract and send PhantomBuster logs
-          // The output might be in containerResponse.output or containerResponse.outputText or the whole response
-          let outputText = containerResponse.output;
-          if (!outputText && (containerResponse as any).outputText) {
-            outputText = (containerResponse as any).outputText;
+          // Extract output - check multiple possible locations (like bash script searches entire response)
+          // The bash script searches the entire response text, not just an "output" field
+          let outputText = "";
+          const responseAny = containerResponse as any;
+          
+          // Check common output field names
+          if (responseAny.output) {
+            outputText = typeof responseAny.output === 'string' ? responseAny.output : JSON.stringify(responseAny.output);
+          } else if (responseAny.outputText) {
+            outputText = typeof responseAny.outputText === 'string' ? responseAny.outputText : JSON.stringify(responseAny.outputText);
+          } else if (responseAny.result) {
+            outputText = typeof responseAny.result === 'string' ? responseAny.result : JSON.stringify(responseAny.result);
+          } else if (responseAny.data?.output) {
+            outputText = typeof responseAny.data.output === 'string' ? responseAny.data.output : JSON.stringify(responseAny.data.output);
+          } else if (responseAny.containerOutput) {
+            outputText = typeof responseAny.containerOutput === 'string' ? responseAny.containerOutput : JSON.stringify(responseAny.containerOutput);
           }
-          if (!outputText) {
-            // Fallback: stringify the whole response to search for URLs/logs
+          
+          // Fallback: stringify the entire response (like bash script does)
+          // The bash script searches the entire response text for URLs and logs
+          if (!outputText || outputText.length < 10) {
             outputText = JSON.stringify(containerResponse);
           }
           
